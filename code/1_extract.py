@@ -7,32 +7,36 @@
 - For each unique year in the surveys: extract the cost of living for that year from the website, engineer a `year` column for that year, then save as `cache/col_{year}.csv` for example for `2024` it would be `cache/col_2024.csv`
 '''
 # This code is used to extract the data from the csv files and clean it.
+import pandas as pd
+import numpy as np
+import streamlit as st
+import pandaslib as pl
 
-# Extract survey data from Google Sheets
-survey_url = 'https://docs.google.com/spreadsheets/d/1IPS5dBSGtwYVbjsfbaMCYIWnOuRmJcbequohNxCyGVw/export?resourcekey=&gid=1625408792&format=csv'
-survey = pd.read_csv(survey_url)
+'''
+# Load survey data from Google Sheets
+survey_link = 'https://docs.google.com/spreadsheets/d/1IPS5dBSGtwYVbjsfbaMCYIWnOuRmJcbequohNxCyGVw/export?resourcekey=&gid=1625408792&format=csv'
+survey_data = pd.read_csv(survey_link)
 
-# Engineer the 'year' column using the extract_year_mdy function
-survey['year'] = survey['Timestamp'].apply(lambda x: pl.extract_year_mdy(x))
+# Create a 'year' column using the extract_year_mdy function
+survey_data['year'] = survey_data['Timestamp'].apply(lambda timestamp: pl.extract_year_mdy(timestamp))
 
-# Save the survey data to the cache folder
-survey.to_csv('cache/survey.csv', index=False)
+# Save the processed survey data to the cache directory
+survey_data.to_csv('cache/survey.csv', index=False)
 
-# Extract unique years from the survey data
-unique_years = survey['year'].dropna().unique()
+# Identify unique years in the survey data
+distinct_years = survey_data['year'].dropna().unique()
 
-# Loop through each year and extract cost of living data
-for year in unique_years:
-    # Fetch cost of living data for the specific year
-    col_data = pd.read_html(f"https://www.numbeo.com/cost-of-living/rankings.jsp?title={year}&displayColumn=0")[1]
+# Iterate over each year to fetch and save cost of living data
+for distinct_year in distinct_years:
+    # Retrieve cost of living data for the given year
+    cost_of_living_data = pd.read_html(f"https://www.numbeo.com/cost-of-living/rankings.jsp?title={distinct_year}&displayColumn=0")[1]
     
-    # Add the 'year' column to the data
-    col_data['year'] = year
+    # Add a 'year' column to the dataset
+    cost_of_living_data['year'] = distinct_year
     
-    # Save the cost of living data to the cache folder
-    col_data.to_csv(f'cache/col_{year}.csv', index=False)
-
-
+    # Save the cost of living data to the cache directory
+    cost_of_living_data.to_csv(f'cache/col_{distinct_year}.csv', index=False)
+    '''
 
 '''This code is used to extract the data from the csv files and clean it.
 for i in range(1, 4):
