@@ -1,3 +1,7 @@
+'''
+The bulk of the work is done in the transform process. Here we read our data from the cache back into pandas. From there we will clean the data, engineer new columns, join datasets together, etc all on route to producing a dataset from which we can create the reports. In the final transformation step, we write the reports back to the cache. 
+'''
+
 import pandas as pd
 import streamlit as st
 import pandaslib as pl
@@ -6,52 +10,82 @@ import pandaslib as pl
 
 ## Load from cache
 
-# load survey data from cache
+# Load survey data
 survey_data = pd.read_csv('cache/survey.csv')
 
-# load the states data from cache
+# Load states data
 states_data = pd.read_csv('cache/states.csv')
 
-# load list of col data from cache
+# Load cost of living (col) data for each year
 cols = []
 for year in survey_data['year'].unique():
     col = pd.read_csv(f'cache/col_{year}.csv')
     cols.append(col)
 
-# combine all col data into one dataframe
+# Combine all col data into one DataFrame
 col_data = pd.concat(cols, ignore_index=True)
-
-# clean the country column
+# Clean the country column
 survey_data['_country'] = survey_data['What country do you work in?'].apply(pl.clean_country_usa)
 
-# lookup the state code from the state name
-survey_states_combined = survey_data.merge(states_data, left_on="If you're in the U.S., what state do you work in?", right_on='State', how='inner')
+# Merge survey data with states data to get state abbreviations
+survey_states_combined = survey_data.merge(
+    states_data,
+    left_on="If you're in the U.S., what state do you work in?",
+    right_on='State',
+    how='inner'
+)
 
-# create full city by combining city and state and country
-survey_states_combined['_full_city'] = survey_states_combined['What city do you work in?'] + ', ' + survey_states_combined['Abbreviation'] + ', ' + survey_states_combined['_country']
+# Create a full city column by combining city, state, and country
+survey_states_combined['_full_city'] = (
+    survey_states_combined['What city do you work in?'] + ', ' +
+    survey_states_combined['Abbreviation'] + ', ' +
+    survey_states_combined['_country']
+)
+# Ensure the 'City' column exists in col_data
+if 'City' not in col_data.columns:
+    raise KeyError(f"'City' column is missing in col_data. Available columns: {col_data.columns}")
 
-# merge the survey data with the col data
-combined = survey_states_combined.merge(col_data, left_on=['year', '_full_city'], right_on=['year', 'City'], how='inner')
+# Merge survey data with cost of living data
+combined = survey_states_combined.merge(
+    col_data,
+    left_on=['year', '_full_city'],
+    right_on=['year', 'City'],
+    how='inner'
+)
 
-# clean the salary column
-combined["_annual_salary_cleaned"] = combined["What is your annual salary? (You'll indicate the currency in a later question. If you are part-time or hourly, please enter an annualized equivalent -- what you would earn if you worked the job 40 hours a week, 52 weeks a year.)"].apply(pl.clean_currency)
+# Clean the salary column
+combined["_annual_salary_cleaned"] = combined[
+    "What is your annual salary? (You'll indicate the currency in a later question. "
+    "If you are part-time or hourly, please enter an annualized equivalent -- what you would earn if you worked the job 40 hours a week, 52 weeks a year.)"
+].apply(pl.clean_currency)
 
-combined['_annual_salary_adjusted'] = combined.apply(lambda row: row["_annual_salary_cleaned"] * (100 / row['Cost of Living Index']), axis=1)
-
-# save the combined data to a csv file
+# Adjust salary based on the cost of living index
+combined['_annual_salary_adjusted'] = combined.apply(
+    lambda row: row["_annual_salary_cleaned"] * (100 / row['Cost of Living Index']),
+    axis=1
+)
+# Save the combined dataset to a CSV file
 combined.to_csv('cache/survey_dataset.csv', index=False)
 
-# Annual Salary adjusted by location and age
-annual_salary_adjusted_by_location_and_age = combined.pivot_table(index='_full_city', columns='How old are you?', values='_annual_salary_adjusted', aggfunc='mean')
+# Create pivot tables for analysis
+annual_salary_adjusted_by_location_and_age = combined.pivot_table(
+    index='_full_city',
+    columns='How old are you?',
+    values='_annual_salary_adjusted',
+    aggfunc='mean'
+)
 annual_salary_adjusted_by_location_and_age.to_csv('cache/annual_salary_adjusted_by_location_and_age.csv')
 
-# Annual Salary adjusted by location and education
-annual_salary_adjusted_by_location_and_education = combined.pivot_table(index='_full_city', columns='What is your highest level of education completed?', values='_annual_salary_adjusted', aggfunc='mean')
-annual_salary_adjusted_by_location_and_age.to_csv('cache/annual_salary_adjusted_by_location_and_education.csv')
+annual_salary_adjusted_by_location_and_education = combined.pivot_table(
+    index='_full_city',
+    columns='What is your highest level of education completed?',
+    values='_annual_salary_adjusted',
+    aggfunc='mean'
+)
+annual_salary_adjusted_by_location_and_education.to_csv('cache/annual_salary_adjusted_by_location_and_education.csv')
+
+# Display the education pivot table in Streamlit
 st.write(annual_salary_adjusted_by_location_and_education)
-
-
-
 '''
 # load survey data from cache
 survey_data = pd.read_csv('cache/survey.csv')
