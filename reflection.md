@@ -23,3 +23,7 @@ Examples:
 
 `--- Reflection Below This Line ---`
 
+Through this coding experience I pulled data from the spreadsheet into the cache. I pulled raw survey responses, U.S. state information (for matching abbreviations), and Year-specific Cost of Living (COL) data from the sheet. It basically extracted everything and brought it into the code. I replaced any kinda of extra characters out of the string and transformed them into the float. 
+
+I used clean country to clean and organzie the data, theen using JSON to nromalize-- I was able to organize messy data into something usable. I merged the states, the years, and cost of living to allow my analysis in transform.py to work. 
+Most importantly, I used pivot tables to analyze and organize the data from this lab. 
