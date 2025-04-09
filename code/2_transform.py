@@ -16,11 +16,9 @@ survey_data = pd.read_csv('cache/survey.csv')
 # Load states data
 states_data = pd.read_csv('cache/states.csv')
 
-unique_years = survey_data['year'].unique()
 # Load cost of living (col) data for each year
 cols = []
-for year in unique_years:
-    # Check if the file exists before reading
+for year in survey_data['year'].unique():
     col = pd.read_csv(f'cache/col_{year}.csv')
     cols.append(col)
 
