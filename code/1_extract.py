@@ -13,28 +13,33 @@ import streamlit as st
 import pandaslib as pl
 
 # Read the data from the google sheet
-url = pd.read_csv("https://docs.google.com/spreadsheets/d/1IPS5dBSGtwYVbjsfbaMCYIWnOuRmJcbequohNxCyGVw/export?resourcekey=&gid=1625408792&format=csv")
+surveys = pd.read_csv("https://docs.google.com/spreadsheets/d/1IPS5dBSGtwYVbjsfbaMCYIWnOuRmJcbequohNxCyGVw/export?resourcekey=&gid=1625408792&format=csv")
+# print(url.head())
+
 # Save the data to a csv file
-url['year'] = url['Timestamp'].apply(pl.extract_year_mdy)
+surveys['year'] = surveys['Timestamp'].apply(pl.extract_year_mdy)
 # Save the data to a csv file
-url.to_csv('cache/states.csv', index=False)
+surveys.to_csv('cache/survey.csv', index=False)
 
 #extract unqiue years from the survey data
-multiple_years = url['year'].unique()
+multiple_years = surveys['year'].unique()
 
 # Iterate over each year to fetch and save cost of living data
 for mutiple_year in multiple_years:
     # Retrieve cost of living data for the given year
-    col_url = pd.read_html(f"https://www.numbeo.com/cost-of-living/rankings.jsp?title={mutiple_year}&displayColumn=0")[0]
+    col_url = pd.read_html(f"https://www.numbeo.com/cost-of-living/rankings.jsp?title={mutiple_year}&displayColumn=0")
+    col_url = col_url[1]
+
     # Add a 'year' column to the dataset
     col_url['year'] = mutiple_year
     # Save the cost of living data to the cache directory
     col_url.to_csv(f'cache/col_{mutiple_year}.csv', index=False)
 
+    # extract states from the csv
     link="https://docs.google.com/spreadsheets/d/14wvnQygIX1eCVo7H5B7a96W1v5VCg6Q9yeRoESF6epw/export?format=csv"
     state_data = pd.read_csv(link)
+    # save csv to cache folder as "states.csv"
     state_data.to_csv ('cache/states.csv', index=False)
-
 
 '''
 # Load survey data from Google Sheets
