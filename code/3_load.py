@@ -43,7 +43,7 @@ if __name__ == '__main__':
 
     #TODO: Write your load code here (remove pass first)
     # Load survey data
-    files = ['cache/survey_combined.csv', 'cache/annual_salary_adjusted_by_location_and_age.csv', 'cache/annual_salary_adjusted_by_location_and_education.csv']
+    files = ['cache/survey_dataset.csv', 'cache/annual_salary_adjusted_by_location_and_age.csv', 'cache/annual_salary_adjusted_by_location_and_education.csv']
     bucket = "ist356mafudge"
     for file in files:
         obj = file.replace('cache/', '')
